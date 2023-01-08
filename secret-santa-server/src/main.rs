@@ -262,6 +262,8 @@ async fn startGame(connect: &mut PooledConn, currentLogin: &String, url: &String
     }
  
     let mut firstLogin = vec.get(0).unwrap();
+    let mut prevLogin = firstLogin;
+    let mut cntIteration: i32 = 0;
     println!("{}", firstLogin);
 	
     for currentLogin in vec.iter() {
