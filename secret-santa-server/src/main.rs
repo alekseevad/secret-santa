@@ -53,8 +53,9 @@ async fn main() -> tide::Result<()>
     server.at("/deleteGroup").post(delete_group);
     
     server.at("/check_santa").post(check_santa);
-
     
+    server.at("/secretGameSanta").post(startGameSecretSanta);
+
     server.listen(listen).await?;
 
 
@@ -213,6 +214,15 @@ fn connectToDataBase(urlBaseDate: &String) -> PooledConn {
         .unwrap()
         .get_conn()
         .unwrap();
+}
+
+async fn startGameSecretSanta(mut req: Request<()>) -> tide::Result {
+    
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+    let json_login { login } = req.body_json().await?;
+ 
+    startGame(&mut connect, &login, &createURLForConnectToDataBase().await).await;
+    Ok((format!("Game started").into()))
 }
 
 async fn createURLForConnectToDataBase() -> String { // URL типа: "mysql://root:password@localhost:3307/db_name"
