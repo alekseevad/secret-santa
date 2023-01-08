@@ -232,6 +232,17 @@ async fn findUser(connect: &mut PooledConn, login: &String) -> bool {
     return false;
 }
 
+async fn setNullAllFields(connect: &mut PooledConn, groupId: i64) -> bool {
+    if findGroup(connect, groupId).await == false {
+        return false;
+    }
+ 
+    let handler = connect.query(format!("UPDATE santas_users SET
+            groupID = -1,
+            is_admin = null
+            WHERE groupID = {}", groupId));
+    return true;
+}
 
 async fn setGroupIdToUser(connect: &mut PooledConn, currentLogin: &String, groupId: i64, token: &String, res: &mut Response) -> bool {
     if currentLogin.is_empty() {
@@ -383,6 +394,14 @@ async fn setUserGroupToNull(connect: &mut PooledConn, currentLogin: &String) {
     connect.query(format!("UPDATE santas_users SET groupId = null WHERE login = \"{}\"", currentLogin)).unwrap();
 }
 
+async fn setSecretSantaToUser(connect: &mut PooledConn, currentLogin: &String, nameSecretSanta: &String) {
+    if currentLogin.is_empty() {
+        return;
+    }
+ 
+    connect.query(format!("UPDATE santas_users SET santa_for = \"{}\" WHERE login = \"{}\"", nameSecretSanta, currentLogin)).unwrap();
+}
+
 async fn check_santa(mut req: Request<()>) -> tide::Result {
     let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
  
@@ -445,9 +464,10 @@ async fn countAdmins(connect: &mut PooledConn, groupId: i64) -> bool {
             println!("{}", count_query);
         }
     }
+    
     if count_query > 1 {
         return true;
     }
-    return false;
     
+    return false;
 }
