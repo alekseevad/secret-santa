@@ -86,7 +86,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
  
             token = "check_santa";
         }
-        
+        else if token_to_do.trim_end() == "start" {
+            println!("Enter your login");
+            std::io::stdin().read_line(&mut login).unwrap();
+
+            map.insert("login", format!("{}", login.trim_end().to_string()));
+
+            token = "secretGameSanta";
+        }
         else if token_to_do.trim_end() == ("exit") {
             println!("End the program");
             break;
