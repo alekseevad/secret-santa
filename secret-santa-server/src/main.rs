@@ -25,6 +25,12 @@ struct json_login {
     login: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct json_admin {
+    admin: String,
+    login: String,
+}
+
 #[async_std::main]
 async fn main() -> tide::Result<()>
 {
@@ -43,6 +49,8 @@ async fn main() -> tide::Result<()>
     server.at("/leftGroup").post(left_group);
     
     server.at("/setAdmin").post(set_admin);
+    
+    server.at("/deleteGroup").post(delete_group);
 
     
     server.listen(listen).await?;
@@ -131,6 +139,22 @@ async fn set_admin(mut req: Request<()>) -> tide::Result {
     }
  
  
+    Ok((format!("{}", resp).into()))
+}
+
+async fn delete_group(mut req: Request<()>) -> tide::Result {
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+    let mut resp = String::new();
+    let json_login {login} = req.body_json().await?;
+    let group_id = getGroupOfUser(&mut connect, &login).await;
+
+    if(isAdmin(&mut connect, &login).await==true) {
+        setNullByGroup(&mut connect, group_id).await;
+        resp = format!("{} deleted", group_id);
+    }
+    else{
+        resp = "Error: you are not an admin.".to_string();
+    }
     Ok((format!("{}", resp).into()))
 }
 
