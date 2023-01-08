@@ -35,6 +35,7 @@ async fn main() -> tide::Result<()>
     
     server.at("/joinGroup").post(join_group);
 
+    
     server.listen(listen).await?;
 
 
@@ -298,3 +299,35 @@ async fn isAdmin(connect: &mut PooledConn, currentLogin: &String) -> bool {
     return false;
 }
  
+async fn setUserGroupToNull(connect: &mut PooledConn, currentLogin: &String) {
+    if currentLogin.is_empty() {
+        return;
+    }
+ 
+    connect.query(format!("UPDATE santas_users SET groupId = null WHERE login = \"{}\"", currentLogin)).unwrap();
+}
+
+async fn getGroupOfUser(connect: &mut PooledConn, loginUser: &String) -> i64 {
+    let resultQuery = connect.query(format!("SELECT groupId FROM santas_users WHERE login = \"{}\"", loginUser)).unwrap();
+ 
+    for resultList in resultQuery {
+        let currentRow = resultList.unwrap().unwrap();
+ 
+        for valueOfRow in currentRow {
+            if valueOfRow == NULL {
+                return 0;
+            }
+ 
+            let mut chars = valueOfRow.as_sql(false);
+ 
+            chars.pop(); // remove last
+            if chars.len() > 0 {
+                chars.remove(0); // remove first
+            }
+ 
+            return chars.parse().expect("Parse ERROR :(");
+        }
+    }
+ 
+    return -1;
+}
