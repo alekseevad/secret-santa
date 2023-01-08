@@ -217,12 +217,54 @@ fn connectToDataBase(urlBaseDate: &String) -> PooledConn {
 }
 
 async fn startGameSecretSanta(mut req: Request<()>) -> tide::Result {
-    
     let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
     let json_login { login } = req.body_json().await?;
  
     startGame(&mut connect, &login, &createURLForConnectToDataBase().await).await;
     Ok((format!("Game started").into()))
+}
+
+async fn startGame(connect: &mut PooledConn, currentLogin: &String, url: &String)-> bool {
+    if currentLogin.is_empty() {
+        return false;
+    }
+ 
+    if isAdmin(connect, currentLogin).await == false {
+        return false;
+    }
+ 
+    let resultQueryList = connect.query(format!("SELECT login FROM santas_users WHERE groupId = (SELECT groupId FROM santas_users WHERE login = \"{}\")", currentLogin)).unwrap();
+ 
+    let mut vec = Vec::new();
+    let mut flag = false;
+ 
+    for resultList in resultQueryList {
+        let currentRow = resultList.unwrap().unwrap();
+        flag = true;
+ 
+        for valueOfRow in currentRow {
+            let mut currentLogin = valueOfRow.as_sql(false);
+ 
+            currentLogin.pop();
+            if currentLogin.len() > 0 {
+                currentLogin.remove(0);
+            }
+            vec.push(currentLogin);
+        }
+    }
+ 
+    if flag == false {
+        return false;
+    }
+ 
+    if vec.len() == 1 {
+        return false;
+    }
+ 
+    let mut firstLogin = vec.get(0).unwrap();
+    println!("{}", firstLogin);
+	
+    return true;
 }
 
 async fn createURLForConnectToDataBase() -> String { // URL типа: "mysql://root:password@localhost:3307/db_name"
