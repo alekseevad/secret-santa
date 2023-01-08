@@ -77,10 +77,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             token = "deleteGroup";
 
         }
+        
+        else if token_to_do.trim_end() == "santa" {
+            println!("Enter your login");
+            std::io::stdin().read_line(&mut login).unwrap();
+ 
+            map.insert("login", format!("{}", login.trim_end().to_string()));
+ 
+            token = "check_santa";
+        }
+        
         else if token_to_do.trim_end() == ("exit") {
             println!("End the program");
             break;
         }
+       
         else {
             println!("Error: Bad request");
         }
