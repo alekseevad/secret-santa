@@ -4,7 +4,7 @@
 Developers:
 1. Шейко Данила 3530904/10005 - @agentdanabol :vomiting_face:
 2. Алексеев Арсений 3530904/10005 - @alekseevad :star_struck:
-3. Перов Иван 3530904/10005 - @IPerovv :vomiting_face:
+3. Перов Иван 3530904/10005 - @IPerovv :upside-down_face:
 4. Хламов Илья 3530904/10005 - @Coo3n :vomiting_face:
 5. Чирикин Даниил 3530904/10005 - @dach8 :vomiting_face:
 6. Андреев Александр 3530904/10001 - @Sous-tartar :vomiting_face:
