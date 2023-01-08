@@ -22,11 +22,24 @@ async fn main() -> tide::Result<()>
     let listen = format!("{}", address);
     let mut server = tide::new();
     tide::log::start();
- 
+
+    server.at("/newMemb").post(new_member);
+
     server.listen(listen).await?;
- 
+
+
     Ok(())
 }
+
+async fn new_member(mut req: Request<()>) -> tide::Result {
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+
+    let json_part { login, groupId, is_admin, santa_for, } = req.body_json().await?;
+    addUser(&mut connect, &mut createParticipant(login, groupId.parse::<i64>().unwrap(), false, String::from("")).await).await;
+
+    Ok((format!("Member added").into()))
+}
+
 
 async fn addUser(connect: &mut PooledConn, participant: &mut Participant) -> bool { 
     if participant.login.is_empty() {
@@ -75,6 +88,7 @@ async fn addUser(connect: &mut PooledConn, participant: &mut Participant) -> boo
     return true;
 }
 
+
 fn connectToDataBase(urlBaseDate: &String) -> PooledConn {
     return mysql::Pool::new(urlBaseDate)
         .unwrap()
@@ -97,6 +111,36 @@ async fn findUser(connect: &mut PooledConn, login: &String) -> bool {
 
     println!("{}", "User is not found");
     return false;
+}
+
+
+async fn setGroupIdToUser(connect: &mut PooledConn, currentLogin: &String, groupId: i64, token: &String, res: &mut Response) -> bool {
+    if currentLogin.is_empty() {
+        res.set_body(format!("You cant change your group, login is empty"));
+        return false;
+    }
+
+    let current_group = getGroupOfUser(connect, &currentLogin).await;
+
+    if current_group == -1
+    {
+        res.set_body(format!("You are in game"));
+        return false;
+    }
+    else if token == "join" && findGroup(connect, groupId).await {
+        connect.query(format!("UPDATE santas_users SET groupId = {}, santa_for = null WHERE login = \"{}\"", groupId, currentLogin)).unwrap();
+        res.set_body(format!("Added to group {}", groupId));
+        return true;
+    }
+    else if token == "new_group" && !findGroup(connect, groupId).await {
+        connect.query(format!("UPDATE santas_users SET groupId = {}, santa_for = null WHERE login = \"{}\"", groupId, currentLogin)).unwrap();
+        res.set_body(format!("Added to group {}", groupId));
+        return true;
+    }
+    else {
+        res.set_body(format!("Group already exist"));
+        return false;
+    }
 }
 
 async fn createParticipant(login: String, groupId: i64, is_admin: bool, santa_for: String) -> Participant {
