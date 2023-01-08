@@ -530,3 +530,17 @@ fn showFullDateBase(connect: &mut PooledConn) {
         println!();
     }
 }
+
+fn showAllGroups(connect: &mut PooledConn) {
+	let resultQuery = connect.query("SELECT DISTINCT groupId FROM santas_users ORDER BY groupId ASC").unwrap();
+
+	for resultList in resultQuery {
+		let currentRow = resultList.unwrap().unwrap();
+		for valueOfRow in currentRow {
+			if valueOfRow != NULL {
+			print!("{}", valueOfRow.as_sql(false));
+			}
+		}
+		println!();
+	}
+}
