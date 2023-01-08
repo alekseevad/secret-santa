@@ -20,6 +20,11 @@ struct json_group {
     groupId: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct json_login {
+    login: String,
+}
+
 #[async_std::main]
 async fn main() -> tide::Result<()>
 {
@@ -34,6 +39,8 @@ async fn main() -> tide::Result<()>
     server.at("/newGroup").post(new_group);
     
     server.at("/joinGroup").post(join_group);
+    
+    server.at("/leftGroup").post(left_group);
 
     
     server.listen(listen).await?;
@@ -83,6 +90,24 @@ async fn join_group(mut req: Request<()>) -> tide::Result {
     Ok(res)
 }
 
+async fn left_group(mut req: Request<()>) -> tide::Result {
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+ 
+    let json_login { login } = req.body_json().await?;
+    let mut resp: String = String::new();
+    if isAdmin(&mut connect, &login).await == false {
+        if getGroupOfUser(&mut connect, &login).await != -1 {
+            setUserGroupToNull(&mut connect, &login).await;
+            resp = "You left your group".to_string();
+        } else {
+            resp = "Error: you are not in group. Join the group or create a new one and try again.".to_string();
+        }
+    } else {
+        resp = "Error: you are an admin. At first, resign from your duties.".to_string();
+    }
+ 
+    Ok((format!("{}", resp).into()))
+}
 
 async fn addUser(connect: &mut PooledConn, participant: &mut Participant) -> bool { 
     if participant.login.is_empty() {
