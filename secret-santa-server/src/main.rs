@@ -57,6 +57,8 @@ async fn main() -> tide::Result<()>
     server.at("/leftGroup").post(left_group);
     
     server.at("/setAdmin").post(set_admin);
+	
+    server.at("/newResign").post(new_resign);
     
     server.at("/deleteGroup").post(delete_group);
     
@@ -149,6 +151,25 @@ async fn set_admin(mut req: Request<()>) -> tide::Result {
         resp = "Error: you are not an admin.".to_string();
     }
  
+ 
+    Ok((format!("{}", resp).into()))
+}
+
+async fn new_resign(mut req: Request<()>) -> tide::Result {
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+ 
+    let json_login { login, } = req.body_json().await?;
+    let group_id = getGroupOfUser(&mut connect, &login.trim_end().to_string()).await;
+    let mut resp = String::new();
+
+    if isAdmin(&mut connect, &login).await == true {
+        if countAdmins(&mut connect, group_id).await == true {
+            setUserToAdminInGroup(&mut connect, &login, false).await;
+            resp = format!("{} resigned", login)
+        }
+    } else {
+        resp = "Not an admin".to_string();
+    }
  
     Ok((format!("{}", resp).into()))
 }
