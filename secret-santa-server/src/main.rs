@@ -544,3 +544,31 @@ fn showAllGroups(connect: &mut PooledConn) {
 		println!();
 	}
 }
+
+async fn setNullByGroup(connect: &mut PooledConn, groupId: i64) -> bool {
+    if findGroup(connect, groupId).await == false {
+        return false;
+    }
+ 
+    let mut resultQuery = connect.query(format!("SELECT login FROM santas_users where groupId = {}", groupId)).unwrap();
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+ 
+ 
+    for resultList in resultQuery {
+        let currentRow = resultList.unwrap().unwrap();
+        for valueOfRow in currentRow {
+            let mut loginForFunction = valueOfRow.as_sql(false);
+ 
+            loginForFunction.pop();  
+            if loginForFunction.len() > 0 {
+                loginForFunction.remove(0); 
+            }
+ 
+            setUserGroupToNull(&mut connect, &loginForFunction).await;
+            setUserToAdminInGroup(&mut connect, &loginForFunction, false).await;
+        }
+        
+    }
+ 
+    return true;
+}
