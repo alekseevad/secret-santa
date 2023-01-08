@@ -51,6 +51,8 @@ async fn main() -> tide::Result<()>
     server.at("/setAdmin").post(set_admin);
     
     server.at("/deleteGroup").post(delete_group);
+    
+    server.at("/check_santa").post(check_santa);
 
     
     server.listen(listen).await?;
@@ -379,6 +381,26 @@ async fn setUserGroupToNull(connect: &mut PooledConn, currentLogin: &String) {
     }
  
     connect.query(format!("UPDATE santas_users SET groupId = null WHERE login = \"{}\"", currentLogin)).unwrap();
+}
+
+async fn check_santa(mut req: Request<()>) -> tide::Result {
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+ 
+    let mut resp: String = String::new();
+ 
+    let json_login { login } = req.body_json().await?;
+    let resultQuery = connect.query(format!("SELECT santa_for FROM santas_users WHERE login = \"{}\"", login)).unwrap();
+ 
+    for resultList in resultQuery {
+        let currentRow = resultList.unwrap().unwrap();
+        for valueOfRow in currentRow {
+            if valueOfRow != NULL {
+                resp = valueOfRow.as_sql(false);
+            }
+        }
+    }
+ 
+    Ok(format!("{} is your santa", resp).into())
 }
 
 async fn getGroupOfUser(connect: &mut PooledConn, loginUser: &String) -> i64 {
