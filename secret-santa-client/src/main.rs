@@ -40,10 +40,65 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
             token = "newMemb";
         }
+        else if token_to_do.trim_end() == ("left") {
+            println!("Enter your login:");
+            std::io::stdin().read_line(&mut login).unwrap();
+            map.insert("login",format!("{}", login.trim_end().to_string()));
+            token = "leftGroup";
+        }
+        else if token_to_do.trim_end() == ("group") {
+            println!("Enter your login:");
+            std::io::stdin().read_line(&mut login).unwrap();
+ 
+            println!("Enter your group:");
+            std::io::stdin().read_line(&mut group).unwrap();
+ 
+            map.insert("login", format!("{}", login.trim_end().to_string()));
+            map.insert("groupId", format!("{}", group.trim_end()));
+ 
+            token = "newGroup";
+        }
+        else if token_to_do.trim_end() == ("join") {
+            println!("Enter your login:");
+            std::io::stdin().read_line(&mut login).unwrap();
+            map.insert("login",format!("{}", login.trim_end().to_string()));
+ 
+            println!("Enter the group you want to join:");
+            std::io::stdin().read_line(&mut group).unwrap();
+            map.insert("groupId",format!("{}", group.trim_end().to_string()));
+ 
+            token = "joinGroup";
+        }
+        else if token_to_do.trim_end() == ("delete") {
+            println!("Enter your login:");
+            std::io::stdin().read_line(&mut login).unwrap();
+            map.insert("login",format!("{}", login.trim_end().to_string()));
+
+            token = "deleteGroup";
+
+        }
+        
+        else if token_to_do.trim_end() == "santa" {
+            println!("Enter your login");
+            std::io::stdin().read_line(&mut login).unwrap();
+ 
+            map.insert("login", format!("{}", login.trim_end().to_string()));
+ 
+            token = "check_santa";
+        }
+        else if token_to_do.trim_end() == "start" {
+            println!("Enter your login");
+            std::io::stdin().read_line(&mut login).unwrap();
+
+            map.insert("login", format!("{}", login.trim_end().to_string()));
+
+            token = "secretGameSanta";
+        }
         else if token_to_do.trim_end() == ("exit") {
             println!("End the program");
             break;
         }
+       
         else {
             println!("Error: Bad request");
         }
@@ -53,6 +108,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Enter anything to continue");
         std::io::stdin().read_line(&mut login).unwrap();
     }
+    
     Ok(())
 }
 
