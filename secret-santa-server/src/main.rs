@@ -15,6 +15,14 @@ struct Participant {
 }
 
 #[derive(Debug, Deserialize)]
+struct json_part {
+    login: String,
+    groupId: String,
+    is_admin: String,
+    santa_for: String,
+}
+
+#[derive(Debug, Deserialize)]
 struct json_group {
     login: String,
     groupId: String,
@@ -151,13 +159,14 @@ async fn delete_group(mut req: Request<()>) -> tide::Result {
     let json_login {login} = req.body_json().await?;
     let group_id = getGroupOfUser(&mut connect, &login).await;
 
-    if(isAdmin(&mut connect, &login).await==true) {
+    if isAdmin(&mut connect, &login).await==true {
         setNullByGroup(&mut connect, group_id).await;
         resp = format!("{} deleted", group_id);
     }
     else{
         resp = "Error: you are not an admin.".to_string();
     }
+
     Ok((format!("{}", resp).into()))
 }
 
