@@ -6,6 +6,14 @@ use std::string::String;
 use mysql::PooledConn;
 use mysql::Value::NULL;
 
+#[derive(Debug, Deserialize)]
+struct Participant {
+    login: String,
+    groupId: i64,
+    is_admin: bool,
+    santa_for: String,
+}
+
 #[async_std::main]
 async fn main() -> tide::Result<()>
 {
@@ -79,6 +87,24 @@ async fn createURLForConnectToDataBase() -> String { // URL типа: "mysql://r
     return format!("{}", &args[2]);
 }
 
+async fn findUser(connect: &mut PooledConn, login: &String) -> bool {
+    let resultQuery = connect.query(format!("SELECT* FROM santas_users WHERE login = \"{}\"", login)).unwrap();
 
+    for resultList in resultQuery {
+        println!("{}", "User is found");
+        return true; // Если зашел в цикл, значит нашел что надо
+    }
 
+    println!("{}", "User is not found");
+    return false;
+}
+
+async fn createParticipant(login: String, groupId: i64, is_admin: bool, santa_for: String) -> Participant {
+    return Participant {
+        login,
+        groupId, // DEFAULT: -1
+        is_admin, // DEFAULT: FALSE
+        santa_for,// DEFAULT: ""
+    };
+}
 

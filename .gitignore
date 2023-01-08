@@ -1,1 +1,4 @@
 secret-santa-*/target/
+./.idea/*
+secret-santa-*/migrations/
+Cargo.lock
