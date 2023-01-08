@@ -14,6 +14,12 @@ struct Participant {
     santa_for: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct json_group {
+    login: String,
+    groupId: String,
+}
+
 #[async_std::main]
 async fn main() -> tide::Result<()>
 {
@@ -24,6 +30,8 @@ async fn main() -> tide::Result<()>
     tide::log::start();
 
     server.at("/newMemb").post(new_member);
+
+    server.at("/newGroup").post(new_group);
 
     server.listen(listen).await?;
 
@@ -38,6 +46,23 @@ async fn new_member(mut req: Request<()>) -> tide::Result {
     addUser(&mut connect, &mut createParticipant(login, groupId.parse::<i64>().unwrap(), false, String::from("")).await).await;
 
     Ok((format!("Member added").into()))
+}
+
+async fn new_group(mut req: Request<()>) -> tide::Result {
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+
+    let json_group { login, groupId, } = req.body_json().await?;
+
+    let group_id = groupId.parse::<i64>().unwrap();
+    println!("{} {}", login, group_id);
+    let token = "new_group".to_string();
+    let mut res = Response::new(200);
+    if setGroupIdToUser(&mut connect, &login, group_id, &token, &mut res).await == true {
+        let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+        setUserToAdminInGroup(&mut connect, &login, true).await;
+    }
+
+    Ok(res)
 }
 
 
@@ -152,3 +177,79 @@ async fn createParticipant(login: String, groupId: i64, is_admin: bool, santa_fo
     };
 }
 
+async fn setUserToAdminInGroup(connect: &mut PooledConn, currentLogin: &String, isAdmin: bool) {
+    if currentLogin.is_empty() {
+        return;
+    }
+
+    let mut group_id = getNumberGroupUser(connect, currentLogin).await;
+    let mut connect = &mut connectToDataBase(&createURLForConnectToDataBase().await);
+    if isAdmin == false {
+        connect.query(format!("UPDATE santas_users SET is_admin = {} WHERE login = \"{}\"", isAdmin, currentLogin)).unwrap();
+    }
+
+    if isAdmin == true {
+        connect.query(format!("UPDATE santas_users SET is_admin = {} WHERE login = \"{}\"", isAdmin as u8, currentLogin)).unwrap();
+    }
+}
+
+async fn getNumberGroupUser(connect: &mut PooledConn, loginUser: &String) -> i64 {
+    let resultQuery = connect.query(format!("SELECT groupId FROM santas_users WHERE login = \"{}\"", loginUser)).unwrap();
+
+    for resultList in resultQuery {
+        let currentRow = resultList.unwrap().unwrap();
+        for valueOfRow in currentRow {
+            if valueOfRow == NULL {
+                return -1;
+            }
+
+            let mut chars = valueOfRow.as_sql(false);
+
+            chars.pop();
+            if chars.len() > 0 {
+                chars.remove(0);
+            }
+
+            return chars.parse().expect("Parse ERROR :(");
+        }
+    }
+
+    return -1;
+}
+
+async fn findGroup(connect: &mut PooledConn, groupId: i64) -> bool {
+    let resultQuery = connect.query(format!("SELECT* FROM santas_users WHERE groupId = {}", groupId)).unwrap();
+
+    for resultList in resultQuery {
+        println!("{}", "Group is found");
+        return true; // Если зашел в цикл, значит нашел что надо
+    }
+
+    println!("{}", "Group is not found");
+    return false;
+}
+
+async fn getGroupOfUser(connect: &mut PooledConn, loginUser: &String) -> i64 {
+    let resultQuery = connect.query(format!("SELECT groupId FROM santas_users WHERE login = \"{}\"", loginUser)).unwrap();
+
+    for resultList in resultQuery {
+        let currentRow = resultList.unwrap().unwrap();
+
+        for valueOfRow in currentRow {
+            if valueOfRow == NULL {
+                return 0;
+            }
+
+            let mut chars = valueOfRow.as_sql(false);
+
+            chars.pop(); // remove last
+            if chars.len() > 0 {
+                chars.remove(0); // remove first
+            }
+
+            return chars.parse().expect("Parse ERROR :(");
+        }
+    }
+
+    return -1;
+}
