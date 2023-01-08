@@ -264,6 +264,23 @@ async fn startGame(connect: &mut PooledConn, currentLogin: &String, url: &String
     let mut firstLogin = vec.get(0).unwrap();
     println!("{}", firstLogin);
 	
+    for currentLogin in vec.iter() {
+        if cntIteration == 0 {
+            cntIteration += 1;
+            continue;
+        }
+ 
+        setSecretSantaToUser(connect, &prevLogin.trim_end().to_string(), &currentLogin.trim_end().to_string()).await;
+        prevLogin = currentLogin;
+    }
+ 
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+ 
+    let mut group_id = getNumberGroupUser(&mut connect, &currentLogin.trim_end().to_string()).await;
+ 
+    setSecretSantaToUser(&mut connect, &prevLogin.trim_end().to_string(), &firstLogin.trim_end().to_string()).await;
+ 
+    setNullAllFields(&mut connect, group_id).await;
     return true;
 }
 
