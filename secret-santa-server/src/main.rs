@@ -32,6 +32,8 @@ async fn main() -> tide::Result<()>
     server.at("/newMemb").post(new_member);
 
     server.at("/newGroup").post(new_group);
+    
+    server.at("/joinGroup").post(join_group);
 
     server.listen(listen).await?;
 
@@ -61,6 +63,21 @@ async fn new_group(mut req: Request<()>) -> tide::Result {
         let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
         setUserToAdminInGroup(&mut connect, &login, true).await;
     }
+
+    Ok(res)
+}
+
+async fn join_group(mut req: Request<()>) -> tide::Result {
+    let args: Vec<String> = env::args().collect();
+    let url = format!("{}", &args[2]);
+    let mut connect = connectToDataBase(&url);
+ 
+    let json_group { login, groupId, } = req.body_json().await?;
+    let group_id = groupId.parse::<i64>().unwrap();
+    println!("{} {}", login, group_id);
+    let token = "join".to_string();
+    let mut res = Response::new(200);
+    setGroupIdToUser(&mut connect, &login, group_id, &token, &mut res).await;
 
     Ok(res)
 }
@@ -253,3 +270,31 @@ async fn getGroupOfUser(connect: &mut PooledConn, loginUser: &String) -> i64 {
 
     return -1;
 }
+
+async fn isAdmin(connect: &mut PooledConn, currentLogin: &String) -> bool {
+    if currentLogin.is_empty() {
+        return false;
+    }
+ 
+    let resultQueryList = connect.query(format!("SELECT is_admin FROM santas_users WHERE login = \"{}\"", currentLogin)).unwrap();
+ 
+    for resultList in resultQueryList {
+        let currentRow = resultList.unwrap().unwrap();
+ 
+        for valueOfRow in currentRow {
+            if valueOfRow == NULL {
+                return false;
+            }
+            println!("{}", valueOfRow.as_sql(false).trim_end());
+ 
+            if valueOfRow.as_sql(true).trim() == "'1'" {
+                return true;
+            }
+ 
+            return false;
+        }
+    }
+ 
+    return false;
+}
+ 
