@@ -41,6 +41,8 @@ async fn main() -> tide::Result<()>
     server.at("/joinGroup").post(join_group);
     
     server.at("/leftGroup").post(left_group);
+    
+    server.at("/setAdmin").post(set_admin);
 
     
     server.listen(listen).await?;
@@ -105,6 +107,29 @@ async fn left_group(mut req: Request<()>) -> tide::Result {
     } else {
         resp = "Error: you are an admin. At first, resign from your duties.".to_string();
     }
+ 
+    Ok((format!("{}", resp).into()))
+}
+
+async fn set_admin(mut req: Request<()>) -> tide::Result {
+    let mut connect = connectToDataBase(&createURLForConnectToDataBase().await);
+    let mut resp = String::new();
+    let json_admin { admin, login } = req.body_json().await?;
+ 
+    if isAdmin(&mut connect, &admin).await == true {
+        let adm: i64 = getGroupOfUser(&mut connect, &admin.trim_end().to_string()).await;
+        let log: i64 = getGroupOfUser(&mut connect, &login.trim_end().to_string()).await;
+ 
+        if adm == log {
+            connect.query(format!("UPDATE santas_users SET is_admin = {} WHERE login = \"{}\"", true, login.trim_end().to_string())).unwrap();
+            resp = "Admin set".to_string();
+        } else {
+            resp = "Error: this user is not in your group.".to_string();
+        }
+    } else {
+        resp = "Error: you are not an admin.".to_string();
+    }
+ 
  
     Ok((format!("{}", resp).into()))
 }
