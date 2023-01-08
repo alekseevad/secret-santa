@@ -77,7 +77,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             token = "deleteGroup";
 
         }
-        
+        else if token_to_do.trim_end() == ("set") {
+            println!("Enter your login:");
+            std::io::stdin().read_line(&mut login).unwrap();
+            map.insert("admin",format!("{}", login.trim_end().to_string()));
+ 
+            let mut login = String::new();
+            println!("Enter login you want to set as admin:");
+            std::io::stdin().read_line(&mut login).unwrap();
+            map.insert("login",format!("{}", login.trim_end().to_string()));
+
+            token = "setAdmin";
+        }
+        else if token_to_do.trim_end() == "resign" {
+            println!("Enter user's login you want to resign");
+            std::io::stdin().read_line(&mut login).unwrap();
+
+            map.insert("login", format!("{}", login.trim_end().to_string()));
+
+            token = "newResign";
+        }
         else if token_to_do.trim_end() == "santa" {
             println!("Enter your login");
             std::io::stdin().read_line(&mut login).unwrap();
