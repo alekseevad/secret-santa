@@ -422,31 +422,6 @@ async fn check_santa(mut req: Request<()>) -> tide::Result {
     Ok(format!("{} is your santa", resp).into())
 }
 
-async fn getGroupOfUser(connect: &mut PooledConn, loginUser: &String) -> i64 {
-    let resultQuery = connect.query(format!("SELECT groupId FROM santas_users WHERE login = \"{}\"", loginUser)).unwrap();
- 
-    for resultList in resultQuery {
-        let currentRow = resultList.unwrap().unwrap();
- 
-        for valueOfRow in currentRow {
-            if valueOfRow == NULL {
-                return 0;
-            }
- 
-            let mut chars = valueOfRow.as_sql(false);
- 
-            chars.pop(); // remove last
-            if chars.len() > 0 {
-                chars.remove(0); // remove first
-            }
- 
-            return chars.parse().expect("Parse ERROR :(");
-        }
-    }
- 
-    return -1;
-}
-
 async fn countAdmins(connect: &mut PooledConn, groupId: i64) -> bool {
     let cntAdmins = connect.query(format!("SELECT COUNT(is_admin) FROM santas_users WHERE (is_admin = 1 AND groupId = {})", groupId)).unwrap();
     let mut count_query: i8 = 0;
@@ -470,4 +445,19 @@ async fn countAdmins(connect: &mut PooledConn, groupId: i64) -> bool {
     }
     
     return false;
+}
+
+fn showFullDateBase(connect: &mut PooledConn) {
+    let resultQuery = connect.query("SELECT* FROM santas_users").unwrap();
+
+    for resultList in resultQuery {
+        let currentRow = resultList.unwrap().unwrap();
+        
+        for valueOfRow in currentRow { 
+            if valueOfRow != NULL {
+                print!("{}", valueOfRow.as_sql(false));
+            }
+        }
+        println!();
+    }
 }
