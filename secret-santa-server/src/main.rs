@@ -381,3 +381,27 @@ async fn getGroupOfUser(connect: &mut PooledConn, loginUser: &String) -> i64 {
  
     return -1;
 }
+
+async fn countAdmins(connect: &mut PooledConn, groupId: i64) -> bool {
+    let cntAdmins = connect.query(format!("SELECT COUNT(is_admin) FROM santas_users WHERE (is_admin = 1 AND groupId = {})", groupId)).unwrap();
+    let mut count_query: i8 = 0;
+    for resultList in cntAdmins {
+        let currentRow = resultList.unwrap().unwrap();
+        for valueOfRow in currentRow {
+            if valueOfRow != NULL {
+                let mut count_str = valueOfRow.as_sql(false);
+                count_str.pop();   // remove last
+                if count_str.len() > 0 {
+                    count_str.remove(0); // remove first
+                }
+                count_query = count_str.parse::<i8>().unwrap();
+            }
+            println!("{}", count_query);
+        }
+    }
+    if count_query > 1 {
+        return true;
+    }
+    return false;
+    
+}
